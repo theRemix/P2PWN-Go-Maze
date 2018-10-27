@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -68,9 +69,20 @@ func runMenu() {
 	win.Clear(colornames.Firebrick)
 	txt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(txt.Bounds().Center())))
 
+	hostBounds := pixel.R(183, 313, 843, 367)
+	joinBounds := pixel.R(183, 233, 616, 287)
+
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			return
+		}
+
+		if win.JustPressed(pixelgl.MouseButtonLeft) {
+			if hostBounds.Contains(win.MousePosition()) {
+				fmt.Printf("HOST %v", win.MousePosition())
+			} else if joinBounds.Contains(win.MousePosition()) {
+				fmt.Printf("JOIN %v", win.MousePosition())
+			}
 		}
 
 		win.Update()
