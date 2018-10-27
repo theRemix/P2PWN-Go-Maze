@@ -1,110 +1,548 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
 	"flag"
-	"fmt"
-	"net/http"
-	"net/url"
-	"os"
-	"reflect"
-	"strconv"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"math"
+	"time"
 
-	"github.com/localtunnel/go-localtunnel"
+	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/pixelgl"
 )
 
-// CHANGE ME
-const appName = "p2pwn-ready-go-wss"
-const appRelease = "DEVELOPMENT"
+const texSize = 64
 
-// App  Config
-var Config = &appConfig{}
+var (
+	fullscreen   = false
+	showMap      = true
+	width        = 320
+	height       = 200
+	scale        = 3.0
+	wallDistance = 8.0
 
-type appConfig struct {
-	AppName string `json:"appName"` // Name of this app
-	Release string `json:"release"` // "PRODUCTION", "DEVELOPMENT"
-	Port    string // Server Listening Port
-	P2pwn   string // P2PWN Service Address
+	as actionSquare
+
+	pos, dir, plane pixel.Vec
+
+	textures = loadTextures()
+)
+
+func setup() {
+	pos = pixel.V(12.0, 14.5)
+	dir = pixel.V(-1.0, 0.0)
+	plane = pixel.V(0.0, 0.66)
 }
 
-// P2PWN Service Config
-var P2pwn = &p2pwnConfig{}
-
-type p2pwnConfig struct { // all values will be provided by P2PWN
-	ID          string `json:"id"`           // public id assigned by P2PWN service
-	AccessToken string `json:"access_token"` // private access token needed to perform actions on this host
-	DisplayName string `json:"display_name"` // name supplied by appName for grouping rooms in P2PWN
-	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
+var world = [24][24]int{
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
+	{1, 0, 0, 0, 2, 7, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 3, 0, 7, 0, 3, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 6, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 0, 0, 1},
+	{1, 0, 6, 0, 4, 0, 7, 0, 4, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 1},
+	{1, 4, 4, 4, 4, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 5, 5, 5, 0, 5, 5, 0, 0, 1},
+	{1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 1},
+	{1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 5, 0, 5, 5, 5, 5, 5, 5, 5, 0, 5, 0, 1},
+	{1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5, 0, 5, 0, 1},
+	{1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 1},
+	{1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 }
 
-func setConfig(configPtr *string, flagName string, defaultVal string, help string) {
-	flag.StringVar(configPtr, flagName, defaultVal, help)
+func loadTextures() *image.RGBA {
+	p, err := png.Decode(bytes.NewReader(textureData))
+	if err != nil {
+		panic(err)
+	}
 
-	if val, ok := os.LookupEnv(flagName); ok {
-		*configPtr = val
+	m := image.NewRGBA(p.Bounds())
+
+	draw.Draw(m, m.Bounds(), p, image.ZP, draw.Src)
+
+	return m
+}
+
+func getTexNum(x, y int) int {
+	return world[x][y]
+}
+
+func getColor(x, y int) color.RGBA {
+	switch world[x][y] {
+	case 0:
+		return color.RGBA{43, 30, 24, 255}
+	case 1:
+		return color.RGBA{100, 89, 73, 255}
+	case 2:
+		return color.RGBA{110, 23, 0, 255}
+	case 3:
+		return color.RGBA{45, 103, 171, 255}
+	case 4:
+		return color.RGBA{123, 84, 33, 255}
+	case 5:
+		return color.RGBA{158, 148, 130, 255}
+	case 6:
+		return color.RGBA{203, 161, 47, 255}
+	case 7:
+		return color.RGBA{255, 107, 0, 255}
+	case 9:
+		return color.RGBA{0, 0, 0, 0}
+	default:
+		return color.RGBA{255, 194, 32, 255}
 	}
 }
 
-func structToMap(i interface{}) (values url.Values) {
-	values = url.Values{}
-	iVal := reflect.ValueOf(i).Elem()
-	typ := iVal.Type()
-	for i := 0; i < iVal.NumField(); i++ {
-		values.Set(typ.Field(i).Name, fmt.Sprint(iVal.Field(i)))
+func frame() *image.RGBA {
+	m := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	for x := 0; x < width; x++ {
+		var (
+			step         image.Point
+			sideDist     pixel.Vec
+			perpWallDist float64
+			hit, side    bool
+
+			rayPos, worldX, worldY = pos, int(pos.X), int(pos.Y)
+
+			cameraX = 2*float64(x)/float64(width) - 1
+
+			rayDir = pixel.V(
+				dir.X+plane.X*cameraX,
+				dir.Y+plane.Y*cameraX,
+			)
+
+			deltaDist = pixel.V(
+				math.Sqrt(1.0+(rayDir.Y*rayDir.Y)/(rayDir.X*rayDir.X)),
+				math.Sqrt(1.0+(rayDir.X*rayDir.X)/(rayDir.Y*rayDir.Y)),
+			)
+		)
+
+		if rayDir.X < 0 {
+			step.X = -1
+			sideDist.X = (rayPos.X - float64(worldX)) * deltaDist.X
+		} else {
+			step.X = 1
+			sideDist.X = (float64(worldX) + 1.0 - rayPos.X) * deltaDist.X
+		}
+
+		if rayDir.Y < 0 {
+			step.Y = -1
+			sideDist.Y = (rayPos.Y - float64(worldY)) * deltaDist.Y
+		} else {
+			step.Y = 1
+			sideDist.Y = (float64(worldY) + 1.0 - rayPos.Y) * deltaDist.Y
+		}
+
+		for !hit {
+			if sideDist.X < sideDist.Y {
+				sideDist.X += deltaDist.X
+				worldX += step.X
+				side = false
+			} else {
+				sideDist.Y += deltaDist.Y
+				worldY += step.Y
+				side = true
+			}
+
+			if world[worldX][worldY] > 0 {
+				hit = true
+			}
+		}
+
+		var wallX float64
+
+		if side {
+			perpWallDist = (float64(worldY) - rayPos.Y + (1-float64(step.Y))/2) / rayDir.Y
+			wallX = rayPos.X + perpWallDist*rayDir.X
+		} else {
+			perpWallDist = (float64(worldX) - rayPos.X + (1-float64(step.X))/2) / rayDir.X
+			wallX = rayPos.Y + perpWallDist*rayDir.Y
+		}
+
+		if x == width/2 {
+			wallDistance = perpWallDist
+		}
+
+		wallX -= math.Floor(wallX)
+
+		texX := int(wallX * float64(texSize))
+
+		lineHeight := int(float64(height) / perpWallDist)
+
+		if lineHeight < 1 {
+			lineHeight = 1
+		}
+
+		drawStart := -lineHeight/2 + height/2
+		if drawStart < 0 {
+			drawStart = 0
+		}
+
+		drawEnd := lineHeight/2 + height/2
+		if drawEnd >= height {
+			drawEnd = height - 1
+		}
+
+		if !side && rayDir.X > 0 {
+			texX = texSize - texX - 1
+		}
+
+		if side && rayDir.Y < 0 {
+			texX = texSize - texX - 1
+		}
+
+		texNum := getTexNum(worldX, worldY)
+
+		for y := drawStart; y < drawEnd+1; y++ {
+			d := y*256 - height*128 + lineHeight*128
+			texY := ((d * texSize) / lineHeight) / 256
+
+			c := textures.RGBAAt(
+				texX+texSize*(texNum),
+				texY%texSize,
+			)
+
+			if side {
+				c.R = c.R / 2
+				c.G = c.G / 2
+				c.B = c.B / 2
+			}
+
+			m.Set(x, y, c)
+		}
+
+		var floorWall pixel.Vec
+
+		if !side && rayDir.X > 0 {
+			floorWall.X = float64(worldX)
+			floorWall.Y = float64(worldY) + wallX
+		} else if !side && rayDir.X < 0 {
+			floorWall.X = float64(worldX) + 1.0
+			floorWall.Y = float64(worldY) + wallX
+		} else if side && rayDir.Y > 0 {
+			floorWall.X = float64(worldX) + wallX
+			floorWall.Y = float64(worldY)
+		} else {
+			floorWall.X = float64(worldX) + wallX
+			floorWall.Y = float64(worldY) + 1.0
+		}
+
+		distWall, distPlayer := perpWallDist, 0.0
+
+		for y := drawEnd + 1; y < height; y++ {
+			currentDist := float64(height) / (2.0*float64(y) - float64(height))
+
+			weight := (currentDist - distPlayer) / (distWall - distPlayer)
+
+			currentFloor := pixel.V(
+				weight*floorWall.X+(1.0-weight)*pos.X,
+				weight*floorWall.Y+(1.0-weight)*pos.Y,
+			)
+
+			fx := int(currentFloor.X*float64(texSize)) % texSize
+			fy := int(currentFloor.Y*float64(texSize)) % texSize
+
+			m.Set(x, y, textures.At(fx, fy))
+
+			m.Set(x, height-y-1, textures.At(fx+(4*texSize), fy))
+			m.Set(x, height-y, textures.At(fx+(4*texSize), fy))
+		}
 	}
-	return
+
+	return m
+}
+
+func minimap() *image.RGBA {
+	m := image.NewRGBA(image.Rect(0, 0, 24, 26))
+
+	for x, row := range world {
+		for y, _ := range row {
+			c := getColor(x, y)
+			if c.A == 255 {
+				c.A = 96
+			}
+			m.Set(x, y, c)
+		}
+	}
+
+	m.Set(int(pos.X), int(pos.Y), color.RGBA{255, 0, 0, 255})
+
+	if as.active {
+		m.Set(as.X, as.Y, color.RGBA{255, 255, 255, 255})
+	} else {
+		m.Set(as.X, as.Y, color.RGBA{64, 64, 64, 255})
+	}
+
+	return m
+}
+
+func getActionSquare() actionSquare {
+	pt := image.Pt(int(pos.X)+1, int(pos.Y))
+
+	a := dir.Angle()
+
+	switch {
+	case a > 2.8 || a < -2.8:
+		pt = image.Pt(int(pos.X)-1, int(pos.Y))
+	case a > -2.8 && a < -2.2:
+		pt = image.Pt(int(pos.X)-1, int(pos.Y)-1)
+	case a > -2.2 && a < -1.4:
+		pt = image.Pt(int(pos.X), int(pos.Y)-1)
+	case a > -1.4 && a < -0.7:
+		pt = image.Pt(int(pos.X)+1, int(pos.Y)-1)
+	case a > 0.4 && a < 1.0:
+		pt = image.Pt(int(pos.X)+1, int(pos.Y)+1)
+	case a > 1.0 && a < 1.7:
+		pt = image.Pt(int(pos.X), int(pos.Y)+1)
+	case a > 1.7:
+		pt = image.Pt(int(pos.X)-1, int(pos.Y)+1)
+	}
+
+	block := -1
+	active := pt.X > 0 && pt.X < 23 && pt.Y > 0 && pt.Y < 23
+
+	if active {
+		block = world[pt.X][pt.Y]
+	}
+
+	return actionSquare{
+		X:      pt.X,
+		Y:      pt.Y,
+		active: active,
+		block:  block,
+	}
+}
+
+type actionSquare struct {
+	X      int
+	Y      int
+	block  int
+	active bool
+}
+
+func (as actionSquare) toggle(n int) {
+	if as.active {
+		if world[as.X][as.Y] == 0 {
+			world[as.X][as.Y] = n
+		} else {
+			world[as.X][as.Y] = 0
+		}
+	}
+}
+
+func (as actionSquare) set(n int) {
+	if as.active {
+		world[as.X][as.Y] = n
+	}
+}
+
+func run() {
+	cfg := pixelgl.WindowConfig{
+		Bounds:      pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
+		VSync:       true,
+		Undecorated: true,
+	}
+
+	if fullscreen {
+		cfg.Monitor = pixelgl.PrimaryMonitor()
+	}
+
+	win, err := pixelgl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	c := win.Bounds().Center()
+
+	last := time.Now()
+
+	mapRot := -1.6683362599999894
+
+	for !win.Closed() {
+		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+			return
+		}
+
+		win.Clear(color.Black)
+
+		dt := time.Since(last).Seconds()
+		last = time.Now()
+
+		as = getActionSquare()
+
+		if win.Pressed(pixelgl.KeyUp) || win.Pressed(pixelgl.KeyW) {
+			moveForward(3.5 * dt)
+		}
+
+		if win.Pressed(pixelgl.KeyA) {
+			moveLeft(3.5 * dt)
+		}
+
+		if win.Pressed(pixelgl.KeyDown) || win.Pressed(pixelgl.KeyS) {
+			moveBackwards(3.5 * dt)
+		}
+
+		if win.Pressed(pixelgl.KeyD) {
+			moveRight(3.5 * dt)
+		}
+
+		if win.Pressed(pixelgl.KeyRight) {
+			turnRight(1.2 * dt)
+		}
+
+		if win.Pressed(pixelgl.KeyLeft) {
+			turnLeft(1.2 * dt)
+		}
+
+		if win.JustPressed(pixelgl.KeyM) {
+			showMap = !showMap
+		}
+
+		if win.JustPressed(pixelgl.Key1) {
+			as.set(1)
+		}
+
+		if win.JustPressed(pixelgl.Key2) {
+			as.set(2)
+		}
+
+		if win.JustPressed(pixelgl.Key3) {
+			as.set(3)
+		}
+
+		if win.JustPressed(pixelgl.Key4) {
+			as.set(4)
+		}
+
+		if win.JustPressed(pixelgl.Key5) {
+			as.set(5)
+		}
+
+		if win.JustPressed(pixelgl.Key6) {
+			as.set(6)
+		}
+
+		if win.JustPressed(pixelgl.Key7) {
+			as.set(7)
+		}
+
+		if win.JustPressed(pixelgl.Key0) {
+			as.set(0)
+		}
+
+		if win.JustPressed(pixelgl.KeySpace) {
+			as.toggle(3)
+		}
+
+		p := pixel.PictureDataFromImage(frame())
+
+		pixel.NewSprite(p, p.Bounds()).
+			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
+
+		if showMap {
+			m := pixel.PictureDataFromImage(minimap())
+
+			mc := m.Bounds().Min.Add(pixel.V(-m.Rect.W(), m.Rect.H()))
+
+			pixel.NewSprite(m, m.Bounds()).
+				Draw(win, pixel.IM.
+					Moved(mc).
+					Rotated(mc, mapRot).
+					ScaledXY(pixel.ZV, pixel.V(-scale*2, scale*2)))
+		}
+
+		win.Update()
+	}
+}
+
+func moveForward(s float64) {
+	if wallDistance > 0.3 {
+		if world[int(pos.X+dir.X*s)][int(pos.Y)] == 0 {
+			pos.X += dir.X * s
+		}
+
+		if world[int(pos.X)][int(pos.Y+dir.Y*s)] == 0 {
+			pos.Y += dir.Y * s
+		}
+	}
+}
+
+func moveLeft(s float64) {
+	if world[int(pos.X-plane.X*s)][int(pos.Y)] == 0 {
+		pos.X -= plane.X * s
+	}
+
+	if world[int(pos.X)][int(pos.Y-plane.Y*s)] == 0 {
+		pos.Y -= plane.Y * s
+	}
+}
+
+func moveBackwards(s float64) {
+	if world[int(pos.X-dir.X*s)][int(pos.Y)] == 0 {
+		pos.X -= dir.X * s
+	}
+
+	if world[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
+		pos.Y -= dir.Y * s
+	}
+}
+
+func moveRight(s float64) {
+	if world[int(pos.X+plane.X*s)][int(pos.Y)] == 0 {
+		pos.X += plane.X * s
+	}
+
+	if world[int(pos.X)][int(pos.Y+plane.Y*s)] == 0 {
+		pos.Y += plane.Y * s
+	}
+}
+
+func turnRight(s float64) {
+	oldDirX := dir.X
+
+	dir.X = dir.X*math.Cos(-s) - dir.Y*math.Sin(-s)
+	dir.Y = oldDirX*math.Sin(-s) + dir.Y*math.Cos(-s)
+
+	oldPlaneX := plane.X
+
+	plane.X = plane.X*math.Cos(-s) - plane.Y*math.Sin(-s)
+	plane.Y = oldPlaneX*math.Sin(-s) + plane.Y*math.Cos(-s)
+}
+
+func turnLeft(s float64) {
+	oldDirX := dir.X
+
+	dir.X = dir.X*math.Cos(s) - dir.Y*math.Sin(s)
+	dir.Y = oldDirX*math.Sin(s) + dir.Y*math.Cos(s)
+
+	oldPlaneX := plane.X
+
+	plane.X = plane.X*math.Cos(s) - plane.Y*math.Sin(s)
+	plane.Y = oldPlaneX*math.Sin(s) + plane.Y*math.Cos(s)
 }
 
 func main() {
-
-	setConfig(&Config.AppName, "name", appName, "Name of this app")
-	setConfig(&Config.Port, "port", "3000", "Port for server to listen on")
-	setConfig(&Config.P2pwn, "p2pwn", "https://p2pwithme.2018.nodeknockout.com", "P2PWN Service Address")
-
+	flag.BoolVar(&fullscreen, "f", fullscreen, "fullscreen")
+	flag.IntVar(&width, "w", width, "width")
+	flag.IntVar(&height, "h", height, "height")
+	flag.Float64Var(&scale, "s", scale, "scale")
 	flag.Parse()
 
-	port, portErr := strconv.Atoi(Config.Port)
-	if portErr != nil {
-		fmt.Printf("Invalid Port config: %s -> %v \n", Config.Port, port)
-		os.Exit(1)
-		return
-	}
+	setup()
 
-	lt, ltErr := localtunnel.Listen(localtunnel.Options{
-		Subdomain: Config.AppName,
-	})
-	if ltErr != nil {
-		fmt.Printf("Error creating localtunnel: %v\n", ltErr)
-		os.Exit(1)
-		return
-	}
-
-	p2pwnRes, p2pwnErr := http.PostForm(Config.P2pwn, structToMap(Config))
-	if p2pwnErr != nil {
-		fmt.Printf("Error Connecting to P2PWN Service: %v\n", p2pwnErr)
-		os.Exit(1)
-		return
-	}
-
-	defer p2pwnRes.Body.Close()
-	if err := json.NewDecoder(p2pwnRes.Body).Decode(P2pwn); err != nil {
-		fmt.Println("Unmarshal P2PWN Response Error:", err)
-		os.Exit(1)
-		return
-	}
-
-	fmt.Printf("P2PWN is Ready: %+v\n", P2pwn)
-
-	// Setup your handlers
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		fmt.Fprintf(w, "Hello P2PWN-Go")
-	})
-
-	server := http.Server{
-		Addr: ":" + Config.Port,
-	}
-
-	fmt.Printf("Server is listening on %v\n", server.Addr)
-	server.Serve(lt)
+	pixelgl.Run(run)
 }

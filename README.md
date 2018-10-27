@@ -1,6 +1,8 @@
-# P2PWN-Ready-Go-WSS
+# P2PWN Go Maze
 
-P2PWN WSS Starter Kit for Go
+Demo game using [go pixel raycaster experiment](https://github.com/faiface/pixel-examples/tree/master/community/raycaster) written by [Peter Hellberg](https://github.com/peterhellberg/)
+
+With a Client and Server selector using P2PWN
 
 ## Dependencies
 
