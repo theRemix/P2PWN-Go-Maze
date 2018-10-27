@@ -38,6 +38,16 @@ func loadTTF(path string, size float64) (font.Face, error) {
 	}), nil
 }
 
+func drawButtons(win *pixelgl.Window, titleTxt, hostTxt, joinTxt *text.Text) {
+	hostTxt.Clear()
+	joinTxt.Clear()
+	hostTxt.WriteString("Host New Room")
+	joinTxt.WriteString("Join Room")
+	titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(550, -50))))
+	hostTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(670, 200))))
+	joinTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(570, 300))))
+}
+
 func runMenu() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Pixel Rocks!",
@@ -54,27 +64,46 @@ func runMenu() {
 		panic(err)
 	}
 
-	atlas := text.NewAtlas(face, text.ASCII)
-	txt := text.New(pixel.V(50, 500), atlas)
-
-	txt.Color = colornames.Lightgrey
-
-	txt.WriteString("Go Maze!")
-	txt.WriteRune('\n')
-	txt.WriteRune('\n')
-	txt.WriteString("Host New Room")
-	txt.WriteRune('\n')
-	txt.WriteString("Join Room")
-
 	win.Clear(colornames.Firebrick)
-	txt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(txt.Bounds().Center())))
 
-	hostBounds := pixel.R(183, 313, 843, 367)
-	joinBounds := pixel.R(183, 233, 616, 287)
+	atlas := text.NewAtlas(face, text.ASCII)
+
+	titleTxt := text.New(pixel.V(350, 100), atlas)
+	titleTxt.Color = colornames.Lightgrey
+	titleTxt.WriteString("Go Maze!")
+
+	hostTxt := text.New(pixel.V(350, 100), atlas)
+	hostTxt.Color = colornames.Darkkhaki
+
+	joinTxt := text.New(pixel.V(350, 100), atlas)
+	joinTxt.Color = colornames.Darkkhaki
+
+	drawButtons(win, titleTxt, hostTxt, joinTxt)
+
+	hostBounds := pixel.R(195, 285, 854, 336)
+	joinBounds := pixel.R(297, 183, 730, 237)
 
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			return
+		}
+
+		if hostBounds.Contains(win.MousePosition()) {
+			win.Clear(colornames.Firebrick)
+			hostTxt.Color = colornames.Darkturquoise
+			drawButtons(win, titleTxt, hostTxt, joinTxt)
+		} else if joinBounds.Contains(win.MousePosition()) {
+			win.Clear(colornames.Firebrick)
+			joinTxt.Color = colornames.Darkturquoise
+			drawButtons(win, titleTxt, hostTxt, joinTxt)
+		} else if hostTxt.Color != colornames.Darkkhaki {
+			win.Clear(colornames.Firebrick)
+			hostTxt.Color = colornames.Darkkhaki
+			drawButtons(win, titleTxt, hostTxt, joinTxt)
+		} else if joinTxt.Color != colornames.Darkkhaki {
+			win.Clear(colornames.Firebrick)
+			joinTxt.Color = colornames.Darkkhaki
+			drawButtons(win, titleTxt, hostTxt, joinTxt)
 		}
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
