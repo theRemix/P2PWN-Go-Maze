@@ -17,15 +17,20 @@ type p2pHost struct {
 	EntryURL    string `json:"entry_url"`
 }
 
+func (h *p2pHost) getRect(idx int) pixel.Rect {
+	return pixel.R(100, float64(470+(idx*-90)), 800, float64(440+((idx-1)*-90)))
+}
+
 type p2pHostList []*p2pHost
 
 func drawHostList(win *pixelgl.Window, atlas *text.Atlas, hosts *p2pHostList) {
 	for idx, host := range *hosts {
 
-		hostTxt := text.New(pixel.V(250, 50), atlas)
+		hostTxt := text.New(pixel.V(0, 0), atlas)
 		hostTxt.Color = colornames.Darkkhaki
 		hostTxt.WriteString(host.DisplayName)
-		hostTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(580, float64(20+(idx*90))))))
+		r := host.getRect(idx)
+		hostTxt.Draw(win, pixel.IM.Moved(pixel.V(r.Min.X, r.Min.Y)))
 
 	}
 }
@@ -87,6 +92,14 @@ func runJoin() {
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			return
+		}
+
+		if win.JustPressed(pixelgl.MouseButtonLeft) {
+			for idx, host := range *hosts {
+				if host.getRect(idx).Contains(win.MousePosition()) {
+					fmt.Printf("CLICKED HOST %v\n", host.DisplayName)
+				}
+			}
 		}
 
 		win.Update()
