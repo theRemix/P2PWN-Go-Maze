@@ -10,7 +10,11 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 	"github.com/localtunnel/go-localtunnel"
+	"golang.org/x/image/colornames"
 )
 
 // CHANGE ME
@@ -55,7 +59,36 @@ func structToMap(i interface{}) (values url.Values) {
 	return
 }
 
-func host() {
+func runHost() {
+	const font = "fonts/zorque.ttf"
+
+	cfg := pixelgl.WindowConfig{
+		Title:  "Host Game",
+		Bounds: pixel.R(0, 0, 1024, 768),
+	}
+	win, err := pixelgl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+	win.SetSmooth(true)
+
+	fontFace, fontFaceErr := loadTTF(font, 80)
+	if fontFaceErr != nil {
+		panic(fontFaceErr)
+	}
+
+	win.Clear(colornames.Firebrick)
+	atlas := text.NewAtlas(fontFace, text.ASCII)
+
+	titleTxt := text.New(pixel.V(350, 100), atlas)
+	titleTxt.Color = colornames.Lightgrey
+	titleTxt.WriteString("Host Game")
+	titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(600, -100))))
+
+	statusTxt := text.New(pixel.V(350, 100), atlas)
+	statusTxt.Color = colornames.Darkkhaki
+	statusTxt.WriteString("Creating Server")
+	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(730, 200))))
 
 	setConfig(&Config.AppName, "name", appName, "Name of this app")
 	setConfig(&Config.Port, "port", "3000", "Port for server to listen on")
@@ -79,6 +112,8 @@ func host() {
 		return
 	}
 
+	fmt.Printf("Connected to LT: %v\n", lt.URL())
+
 	p2pwnRes, p2pwnErr := http.PostForm(Config.P2pwn, structToMap(Config))
 	if p2pwnErr != nil {
 		fmt.Printf("Error Connecting to P2PWN Service: %v\n", p2pwnErr)
@@ -95,7 +130,6 @@ func host() {
 
 	fmt.Printf("P2PWN is Ready: %+v\n", P2pwn)
 
-	// Setup your handlers
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		fmt.Fprintf(w, "Hello P2PWN-Go")
@@ -106,5 +140,20 @@ func host() {
 	}
 
 	fmt.Printf("Server is listening on %v\n", server.Addr)
-	server.Serve(lt)
+	go server.Serve(lt)
+
+	statusTxt.Clear()
+	statusTxt.Color = colornames.Darkcyan
+	statusTxt.WriteString("Connected!")
+	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
+
+	for !win.Closed() {
+		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+			server.Shutdown(nil)
+			return
+		}
+
+		win.Update()
+	}
+
 }
