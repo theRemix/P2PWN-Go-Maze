@@ -110,4 +110,5 @@ func runJoin() {
 
 		win.Update()
 	}
+	win.Destroy()
 }

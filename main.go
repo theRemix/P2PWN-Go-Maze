@@ -8,7 +8,8 @@ var exitCh = make(chan bool)
 type State int
 
 const (
-	Menu State = iota
+	_ State = iota
+	Menu
 	Join
 	Host
 	Game
@@ -25,10 +26,10 @@ func main() {
 				pixelgl.Run(runMenu)
 			case Join:
 				pixelgl.Run(runJoin)
-			case Host:
-				pixelgl.Run(runHost)
 			case Game:
 				pixelgl.Run(runGame)
+			case Host:
+				pixelgl.Run(runHost)
 			}
 		default:
 			pixelgl.Run(runMenu)

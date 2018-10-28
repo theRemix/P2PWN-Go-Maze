@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -19,16 +20,19 @@ import (
 
 // CHANGE ME
 const appName = "p2pwn-go-maze"
+const displayName = "Go Maze"
 const appRelease = "DEVELOPMENT"
 
 // App  Config
 var Config = &appConfig{}
 
 type appConfig struct {
-	AppName string `json:"appName"` // Name of this app
-	Release string `json:"release"` // "PRODUCTION", "DEVELOPMENT"
-	Port    string // Server Listening Port
-	P2pwn   string // P2PWN Service Address
+	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
+	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
+	Release     string `json:"release"`      // "PRODUCTION", "DEVELOPMENT"
+	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
+	Port        string // Server Listening Port
+	P2pwn       string // P2PWN Service Address
 }
 
 // P2PWN Service Config
@@ -37,7 +41,9 @@ var P2pwn = &p2pwnConfig{}
 type p2pwnConfig struct { // all values will be provided by P2PWN
 	ID          string `json:"id"`           // public id assigned by P2PWN service
 	AccessToken string `json:"access_token"` // private access token needed to perform actions on this host
-	DisplayName string `json:"display_name"` // name supplied by appName for grouping rooms in P2PWN
+
+	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
+	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
 	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
 }
 
@@ -89,10 +95,13 @@ func runHost() {
 	statusTxt.Color = colornames.Darkkhaki
 	statusTxt.WriteString("Creating Server")
 	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(730, 200))))
+	win.Update()
 
 	setConfig(&Config.AppName, "name", appName, "Name of this app")
 	setConfig(&Config.Port, "port", "3000", "Port for server to listen on")
 	setConfig(&Config.P2pwn, "p2pwn", "https://p2pwithme.2018.nodeknockout.com", "P2PWN Service Address")
+	Config.DisplayName = displayName
+	Config.Release = appRelease
 
 	flag.Parse()
 
@@ -112,9 +121,12 @@ func runHost() {
 		return
 	}
 
+	Config.EntryURL = lt.URL()
 	fmt.Printf("Connected to LT: %v\n", lt.URL())
 
-	p2pwnRes, p2pwnErr := http.PostForm(Config.P2pwn, structToMap(Config))
+	payload, _ := json.Marshal(Config)
+
+	p2pwnRes, p2pwnErr := http.Post(Config.P2pwn+"/api/connect", "application/json", bytes.NewBuffer(payload))
 	if p2pwnErr != nil {
 		fmt.Printf("Error Connecting to P2PWN Service: %v\n", p2pwnErr)
 		os.Exit(1)
@@ -130,31 +142,13 @@ func runHost() {
 
 	fmt.Printf("P2PWN is Ready: %+v\n", P2pwn)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		fmt.Fprintf(w, "Hello P2PWN-Go")
-	})
-
-	server := http.Server{
-		Addr: ":" + Config.Port,
-	}
-
-	fmt.Printf("Server is listening on %v\n", server.Addr)
-	go server.Serve(lt)
-
 	statusTxt.Clear()
 	statusTxt.Color = colornames.Darkcyan
 	statusTxt.WriteString("Connected!")
 	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
+	win.Update()
+	win.Destroy()
 
-	for !win.Closed() {
-		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
-			server.Shutdown(nil)
-			go func() { exitCh <- true }()
-			return
-		}
-
-		win.Update()
-	}
-
+	go func() { stateCh <- Game }()
+	go runServer(lt)
 }

@@ -90,4 +90,5 @@ func runMenu() {
 
 		win.Update()
 	}
+	win.Destroy()
 }

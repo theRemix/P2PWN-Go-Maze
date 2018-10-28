@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"image"
 	"image/color"
 	"image/draw"
@@ -350,7 +349,8 @@ func (as actionSquare) set(n int) {
 	}
 }
 
-func run() {
+func runGame() {
+	setup()
 	cfg := pixelgl.WindowConfig{
 		Bounds:      pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
 		VSync:       true,
@@ -468,6 +468,7 @@ func run() {
 
 		win.Update()
 	}
+	win.Destroy()
 }
 
 func moveForward(s float64) {
@@ -534,16 +535,4 @@ func turnLeft(s float64) {
 
 	plane.X = plane.X*math.Cos(s) - plane.Y*math.Sin(s)
 	plane.Y = oldPlaneX*math.Sin(s) + plane.Y*math.Cos(s)
-}
-
-func runGame() {
-	flag.BoolVar(&fullscreen, "f", fullscreen, "fullscreen")
-	flag.IntVar(&width, "w", width, "width")
-	flag.IntVar(&height, "h", height, "height")
-	flag.Float64Var(&scale, "s", scale, "scale")
-	flag.Parse()
-
-	setup()
-
-	pixelgl.Run(run)
 }
