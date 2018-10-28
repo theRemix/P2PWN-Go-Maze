@@ -11,15 +11,15 @@ GOGEN=$(GOCMD) generate
 all: build
 
 build-osx64:
-				env GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY) -v
+				env GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY)-osx64 -v
 
 build-win64:
 				@echo go-gl and glfw are not yet supported on this platform
-				@# env GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY) -v
+				@# env GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY)-win64 -v
 
 build-linux64:
 				@echo go-gl and glfw are not yet supported on this platform
-				@# env GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY) -v
+				@# env GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BIN_PATH)/$(BINARY)-linux64 -v
 
 release: generate build-osx64 build-win64 build-linux64
 
@@ -28,8 +28,8 @@ clean:
 				rm -f $(BIN_PATH)/*
 
 run:
-				$(GOBUILD) -o $(BIN_PATH)/$(BINARY) -v
-				env $(RUN_ENV) $(BIN_PATH)/$(BINARY)
+				$(GOBUILD) -o $(BIN_PATH)/$(BINARY)-osx64 -v
+				env $(RUN_ENV) $(BIN_PATH)/$(BINARY)-osx64
 
 generate:
 				$(GOGEN)
