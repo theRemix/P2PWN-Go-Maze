@@ -30,7 +30,6 @@ func (c *Client) SendAction(ca *ClientAction) {
 		return
 	}
 	ca.ClientID = c.ID
-	fmt.Printf("Client Action: %+v\n", ca)
 	go func() {
 		jsonCa, _ := json.Marshal(ca)
 

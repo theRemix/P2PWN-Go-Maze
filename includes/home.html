@@ -1,12 +1,353 @@
 <html>
-<head>
-  <title>Go Maze</title>
-</head>
-<body>
-  <h1>Go Maze</h1>
-  <h2>Download the game</h2>
-  <a href="https://github.com/theRemix/P2PWN-Go-Maze/releases/latest">OSX</a>
-  <a href="#-NOT-YET-I-SAID">Windows (coming soon)</a>
-  <a href="#-NOT-YET-I-SAID">Linux (coming soon)</a>
-</body>
+  <head>
+    <title>Go Maze</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+  </head>
+  <body>
+    <section class="hero is-medium is-primary is-bold">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title">
+            Go Maze
+          </h1>
+          <h2 class="subtitle">
+            Download the game
+          </h2>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="subtitle">
+          What is Go Maze?
+        </h2>
+
+        <div class="box">
+          <article class="content">
+            <p>
+            This is a working prototype of a multiplayer P2P desktop game that uses the
+            <a href="http://p2pwithme.2018.nodeknockout.com">P2PWN Service</a> for peer host discovery.
+            </p>
+            <p>
+            You can host your own games, or join someone elses. Just like we used to do in the 90s.
+            </p>
+            <p>
+            The <a href="http://p2pwithme.2018.nodeknockout.com">P2PWN Lobby</a> websocket connection broker also provides a list of active games that anyone can join.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <nav class="level">
+          <p class="level-item has-text-centered">
+
+          <a class="button is-info is-large" href="https://github.com/theRemix/P2PWN-Go-Maze/releases/latest">
+            <span class="icon is-small">
+              <i class="fas fa-download"></i>
+            </span>
+            <span>
+              Download For OSX
+            </span>
+          </a>
+          </p>
+          <p class="level-item has-text-centered">
+
+          <a class="button is-warning is-large" disabled href="#-NOT-YET-I-SAID">
+            <span class="icon is-small">
+              <i class="fas fa-exclamation-triangle"></i>
+            </span>
+            <span>
+              Windows (coming soon)
+            </span>
+          </a>
+          </p>
+          <p class="level-item has-text-centered">
+          <a class="button is-warning is-large" disabled href="#-NOT-YET-I-SAID">
+            <span class="icon is-small">
+              <i class="fas fa-exclamation-triangle"></i>
+            </span>
+            <span>
+              Linux (coming soon)
+            </span>
+          </a>
+          </p>
+        </nav>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="subtitle">
+          Installation
+        </h2>
+
+        <div class="box">
+          <article>
+            <p>
+            Download the zip file from the latest release on Github using the link above.
+            </p>
+            <p>
+            Unzip the file once it's downloaded.
+            </p>
+            <p>
+            Your browser may warn about a binary in the download, confirm that you want to download and extract it.
+            </p>
+            <p>
+            Once extracted, <b>Right Click</b> on it and choose <b>Open</b> from the context menu.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="subtitle">
+          Screenshots
+        </h2>
+
+        <div class="box">
+          <article class="media">
+            <figure class="image">
+              <img src="https://raw.githubusercontent.com/theRemix/P2PWN-Go-Maze/master/static/gomaze-1.png" alt="Go Maze Screenshot 1">
+            </figure>
+          </article>
+        </div>
+
+        <div class="box">
+          <article class="media">
+            <figure class="image">
+              <img src="https://raw.githubusercontent.com/theRemix/P2PWN-Go-Maze/master/static/gomaze-2.png" alt="Go Maze Screenshot 2">
+            </figure>
+          </article>
+        </div>
+
+        <div class="box">
+          <article class="media">
+            <figure class="image">
+              <img src="https://raw.githubusercontent.com/theRemix/P2PWN-Go-Maze/master/static/gomaze-3.png" alt="Go Maze Screenshot 3">
+            </figure>
+          </article>
+        </div>
+
+        <div class="box">
+          <article class="media">
+            <figure class="image">
+              <img src="https://raw.githubusercontent.com/theRemix/P2PWN-Go-Maze/master/static/gomaze-4.png" alt="Go Maze Screenshot 4">
+            </figure>
+          </article>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="subtitle">
+          Instructions
+        </h2>
+
+        <div class="box">
+          <article class="content">
+            <p>
+            This is still a prototype, so some things may change.
+            You may not be able to see other players yet, though you can see the results of their actions.
+            </p>
+            <p>
+            Movement
+            </p>
+            <div class="field has-addons">
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-left"></i>
+                </span>
+                <span>Left</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-down"></i>
+                </span>
+                <span>Down</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-up"></i>
+                </span>
+                <span>Up</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-right"></i>
+                </span>
+                <span>Right</span>
+              </a>
+              </p>
+            </div>
+            <div class="field has-addons">
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-up"></i>
+                </span>
+                <span>W</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-left"></i>
+                </span>
+                <span>A</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-down"></i>
+                </span>
+                <span>S</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-arrow-right"></i>
+                </span>
+                <span>D</span>
+              </a>
+              </p>
+            </div>
+            <p>
+            Block Placement
+            </p>
+            <div class="field has-addons">
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>1</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>2</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>3</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>4</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>5</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>6</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span>7</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-eraser"></i>
+                </span>
+                <span>0</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-minus-square"></i>
+                </span>
+                <span>Spacebar: toggles block</span>
+              </a>
+              </p>
+            </div>
+            <p>
+            Other Controls
+            </p>
+            <div class="field has-addons">
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-map-marked-alt"></i>
+                </span>
+                <span>M : toggle mini-map</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-window-close"></i>
+                </span>
+                <span>Q : quit</span>
+              </a>
+              </p>
+              <p class="control">
+              <a class="button">
+                <span class="icon is-small">
+                  <i class="fas fa-window-close"></i>
+                </span>
+                <span>Escape : quit</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+<footer class="footer">
+  <div class="content has-text-centered">
+    <p>
+      <strong>Go Maze</strong> with P2P multiplayer by <a href="https://github.com/theRemix">@theRemix</a>
+    |
+    <a href="https://github.com/faiface/pixel-examples/tree/master/community/raycaster">Go pixel raycaster experiment</a> by <a href="https://github.com/peterhellberg/">Peter Hellberg</a>
+    </p>
+  </div>
+</footer>
+  </body>
 </html>
