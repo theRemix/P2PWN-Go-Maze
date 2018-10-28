@@ -19,7 +19,7 @@ type p2pHost struct {
 }
 
 func (h *p2pHost) getRect(idx int) pixel.Rect {
-	return pixel.R(100, float64(470+(idx*-90)), 800, float64(440+((idx-1)*-90)))
+	return pixel.R(100, float64(440+(idx*-40)), 800, float64(440+((idx-1)*-40)))
 }
 
 type p2pHostList []*p2pHost
@@ -60,7 +60,7 @@ func runJoin(win *pixelgl.Window) {
 		panic(titleFontErr)
 	}
 
-	hostFontFace, hostFontErr := loadTTF(hostFont, 80)
+	hostFontFace, hostFontErr := loadTTF(hostFont, 40)
 	if hostFontErr != nil {
 		panic(hostFontErr)
 	}
@@ -72,16 +72,19 @@ func runJoin(win *pixelgl.Window) {
 	titleTxt := text.New(pixel.V(350, 100), titleAtlas)
 	titleTxt.Color = colornames.Lightgrey
 	titleTxt.WriteString("Join Game")
-	titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(560, -100))))
+	titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(800, -110))))
 
-	backTxt := text.New(pixel.V(150, 30), titleAtlas)
+	backTxt := text.New(pixel.V(350, 100), titleAtlas)
 	backTxt.Color = colornames.Lightgrey
 	backTxt.WriteString("Back")
-	backTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(610, -270))))
+	backTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(120, -110))))
 
 	hosts, getHostsErr := getHostList()
 	if getHostsErr != nil {
 		fmt.Printf("Problem getting list of game hosts. %v\n", getHostsErr)
+		win.Update()
+		go func() { stateCh <- Menu }()
+		return
 	}
 
 	drawHostList(win, atlas, hosts)
@@ -93,7 +96,12 @@ func runJoin(win *pixelgl.Window) {
 		}
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
-			if pixel.R(0, 650, 300, 800).Contains(win.MousePosition()) {
+			fmt.Printf("%+v", win.MousePosition())
+		}
+
+		if win.JustPressed(pixelgl.MouseButtonLeft) {
+			if pixel.R(680, 470, 960, 600).Contains(win.MousePosition()) {
+				win.Update()
 				go func() { stateCh <- Menu }()
 				return
 			}

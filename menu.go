@@ -41,8 +41,8 @@ func runMenu(win *pixelgl.Window) {
 
 	drawMenuButtons(win, titleTxt, hostTxt, joinTxt)
 
-	hostBounds := pixel.R(195, 285, 854, 336)
-	joinBounds := pixel.R(297, 183, 730, 237)
+	hostBounds := pixel.R(170, 200, 825, 250)
+	joinBounds := pixel.R(270, 100, 700, 150)
 
 	for state == Menu {
 		if win.Closed() || win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
@@ -70,9 +70,11 @@ func runMenu(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			if hostBounds.Contains(win.MousePosition()) {
+				win.Update()
 				go func() { stateCh <- Host }()
 				return
 			} else if joinBounds.Contains(win.MousePosition()) {
+				win.Update()
 				go func() { stateCh <- Join }()
 				return
 			}
