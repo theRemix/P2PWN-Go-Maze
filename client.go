@@ -18,11 +18,42 @@ type ClientAction struct {
 
 type Client struct {
 	ID      int
+	X       int
+	Y       int
 	Updated time.Time
 }
 
 func (c *Client) NeedsUpdate() bool {
 	return !c.Updated.Equal(worldState.LastUpdated)
+}
+
+func (c *Client) SendMovement(x, y int) {
+	if c.X == x && c.Y == y {
+		c.X = x
+		c.Y = y
+		return
+	}
+
+	c.X = x
+	c.Y = y
+	if c.ID == 0 { // client is host
+		worldState.UpdatePlayerPosition(c)
+		return
+	}
+
+	go func() {
+		jsonCa, _ := json.Marshal(c)
+
+		resp, reqErr := http.Post(clientCreateUrl("/srv/movement"), "application/json", bytes.NewBuffer(jsonCa))
+		if reqErr != nil {
+			fmt.Printf("Error in http request, client movement: %s\n", reqErr)
+			return
+		}
+		if resp.StatusCode != 200 {
+			go func() { stateCh <- Menu }()
+			return
+		}
+	}()
 }
 
 func (c *Client) SendAction(ca *ClientAction) {
@@ -49,6 +80,7 @@ type UpdateResponse struct {
 	State      OpCode
 	Updated    time.Time
 	WorldTiles *WorldTiles
+	Players    map[int]*Client
 }
 
 var (
@@ -120,6 +152,10 @@ func clientUpdates() {
 			if updateResponse.State == StateNew {
 				client.Updated = updateResponse.Updated
 				worldState.Tiles = updateResponse.WorldTiles
+				worldState.Players = updateResponse.Players
+				for _, p := range worldState.Players {
+					worldState.UpdatePlayerPosition(p)
+				}
 			}
 		}
 

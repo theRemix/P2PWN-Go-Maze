@@ -25,10 +25,24 @@ type actionSquare struct {
 type WorldState struct {
 	Tiles       *WorldTiles
 	LastUpdated time.Time
+	Players     map[int]*Client
 }
 
 func (w *WorldState) UpdateWorldTime() {
 	w.LastUpdated = time.Now()
+}
+
+func (w *WorldState) UpdatePlayerPosition(c *Client) {
+	if client.ID == 0 {
+		worldState.UpdateWorldTime()
+	}
+
+	if p, ok := w.Players[c.ID]; ok {
+		w.Players[p.ID].X = c.X
+		w.Players[p.ID].Y = c.Y
+	} else {
+		w.Players[c.ID] = c
+	}
 }
 
 type WorldTiles [24][24]int
@@ -43,6 +57,7 @@ var (
 
 	worldState = &WorldState{
 		LastUpdated: time.Now(),
+		Players:     make(map[int]*Client),
 		Tiles: &WorldTiles{
 			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -299,6 +314,12 @@ func minimap() *image.RGBA {
 		}
 	}
 
+	for _, p := range worldState.Players {
+		if p.ID != client.ID {
+			m.Set(p.X, p.Y, color.RGBA{10, 120, 200, 200})
+		}
+	}
+
 	m.Set(int(pos.X), int(pos.Y), color.RGBA{255, 0, 0, 255})
 
 	if as.active {
@@ -377,6 +398,12 @@ func (as actionSquare) set(n int) {
 
 func runGame(win *pixelgl.Window) {
 	setup()
+
+	if client.ID == 0 {
+		client.X = int(pos.X)
+		client.Y = int(pos.Y)
+	}
+	worldState.UpdatePlayerPosition(client)
 
 	c := win.Bounds().Center()
 
@@ -531,6 +558,7 @@ func moveForward(s float64) {
 		if worldState.Tiles[int(pos.X)][int(pos.Y+dir.Y*s)] == 0 {
 			pos.Y += dir.Y * s
 		}
+		client.SendMovement(int(pos.X), int(pos.Y))
 	}
 }
 
@@ -542,6 +570,7 @@ func moveLeft(s float64) {
 	if worldState.Tiles[int(pos.X)][int(pos.Y-plane.Y*s)] == 0 {
 		pos.Y -= plane.Y * s
 	}
+	client.SendMovement(int(pos.X), int(pos.Y))
 }
 
 func moveBackwards(s float64) {
@@ -552,6 +581,7 @@ func moveBackwards(s float64) {
 	if worldState.Tiles[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
 		pos.Y -= dir.Y * s
 	}
+	client.SendMovement(int(pos.X), int(pos.Y))
 }
 
 func moveRight(s float64) {
@@ -562,6 +592,7 @@ func moveRight(s float64) {
 	if worldState.Tiles[int(pos.X)][int(pos.Y+plane.Y*s)] == 0 {
 		pos.Y += plane.Y * s
 	}
+	client.SendMovement(int(pos.X), int(pos.Y))
 }
 
 func turnRight(s float64) {

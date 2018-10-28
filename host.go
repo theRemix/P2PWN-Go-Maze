@@ -139,6 +139,9 @@ func runHost(win *pixelgl.Window) {
 	labelTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
 	win.Update()
 
+	client = &Client{
+		ID: 0,
+	}
 	go func() { stateCh <- Game }()
 	go runServer(lt)
 }

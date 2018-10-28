@@ -47,6 +47,7 @@ func clientUpdate(w http.ResponseWriter, r *http.Request) {
 			State:      StateNew,
 			Updated:    worldState.LastUpdated,
 			WorldTiles: worldState.Tiles,
+			Players:    worldState.Players,
 		}
 	}
 
@@ -65,6 +66,17 @@ func clientActed(w http.ResponseWriter, r *http.Request) {
 	ca.ActionSquare.set(ca.BlockId)
 }
 
+func clientMoved(w http.ResponseWriter, r *http.Request) {
+	var c = &Client{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(c); err != nil {
+		fmt.Printf("Error reading client movement: %s", err)
+		return
+	}
+
+	worldState.UpdatePlayerPosition(c)
+}
+
 func health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ok")
 }
@@ -80,6 +92,7 @@ func runServer(lt net.Listener) {
 	http.HandleFunc("/srv/connect", clientConnected)
 	http.HandleFunc("/srv/update", clientUpdate)
 	http.HandleFunc("/srv/action", clientActed)
+	http.HandleFunc("/srv/movement", clientMoved)
 	http.HandleFunc("/srv/health", health)
 
 	server := http.Server{
