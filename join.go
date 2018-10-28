@@ -52,8 +52,8 @@ func getHostList() (*p2pHostList, error) {
 }
 
 func runJoin() {
-	const titleFont = "fonts/zorque.ttf"
-	const hostFont = "fonts/gomarice_game_continue_02.ttf"
+	const titleFont = font1 // zorque.ttf
+	const hostFont = font2  // gomarice_game_continue_02.ttf
 
 	cfg := pixelgl.WindowConfig{
 		Title:  "Join Game",

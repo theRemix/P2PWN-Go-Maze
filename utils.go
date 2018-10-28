@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/hex"
 	"flag"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -29,14 +29,8 @@ type ClientAction struct {
 	BlockId      int
 }
 
-func loadTTF(path string, size float64) (font.Face, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	bytes, err := ioutil.ReadAll(file)
+func loadTTF(inlinedFont string, size float64) (font.Face, error) {
+	bytes, err := hex.DecodeString(inlinedFont)
 	if err != nil {
 		return nil, err
 	}

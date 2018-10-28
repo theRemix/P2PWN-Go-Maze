@@ -18,7 +18,7 @@ func drawMenuButtons(win *pixelgl.Window, titleTxt, hostTxt, joinTxt *text.Text)
 }
 
 func runMenu() {
-	const fontFace = "fonts/zorque.ttf"
+	const fontFace = font1 // zorque.ttf
 
 	cfg := pixelgl.WindowConfig{
 		Title:  "Pixel Rocks!",

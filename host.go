@@ -33,7 +33,7 @@ type p2pwnConfig struct { // all values will be provided by P2PWN
 }
 
 func runHost() {
-	const font = "fonts/zorque.ttf"
+	const font = font1 // fonts/zorque.ttf
 
 	cfg := pixelgl.WindowConfig{
 		Title:  "Host Game",
