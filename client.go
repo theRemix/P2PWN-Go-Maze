@@ -94,7 +94,7 @@ func clientConnect(rawurl string) {
 }
 
 func clientUpdates() {
-	ping := time.NewTicker(time.Millisecond * 500)
+	ping := time.NewTicker(time.Millisecond * 250)
 	go func() {
 		for _ = range ping.C {
 
