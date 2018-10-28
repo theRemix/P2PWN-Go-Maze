@@ -356,14 +356,7 @@ func (as actionSquare) toggle(n int) {
 func (as actionSquare) set(n int) {
 	if as.active {
 		world[as.X][as.Y] = n
-
-		clientAction(&ClientAction{
-			Op:           SetActionSquare,
-			ActionSquare: as,
-			BlockId:      n,
-		})
 	}
-
 }
 
 func runGame() {
@@ -431,34 +424,74 @@ func runGame() {
 
 		if win.JustPressed(pixelgl.Key1) {
 			as.set(1)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      1,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key2) {
 			as.set(2)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      2,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key3) {
 			as.set(3)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      3,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key4) {
 			as.set(4)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      4,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key5) {
 			as.set(5)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      5,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key6) {
 			as.set(6)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      6,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key7) {
 			as.set(7)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      7,
+			})
 		}
 
 		if win.JustPressed(pixelgl.Key0) {
 			as.set(0)
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      0,
+			})
 		}
 
 		if win.JustPressed(pixelgl.KeySpace) {
