@@ -150,6 +150,7 @@ func runHost() {
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			server.Shutdown(nil)
+			go func() { exitCh <- true }()
 			return
 		}
 

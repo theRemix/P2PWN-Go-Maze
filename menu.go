@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
@@ -58,6 +56,7 @@ func runMenu() {
 
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+			go func() { exitCh <- true }()
 			return
 		}
 
@@ -81,9 +80,11 @@ func runMenu() {
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			if hostBounds.Contains(win.MousePosition()) {
-				fmt.Printf("HOST %v", win.MousePosition())
+				go func() { stateCh <- Host }()
+				return
 			} else if joinBounds.Contains(win.MousePosition()) {
-				fmt.Printf("JOIN %v", win.MousePosition())
+				go func() { stateCh <- Join }()
+				return
 			}
 		}
 

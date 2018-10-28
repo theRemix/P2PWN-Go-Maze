@@ -91,10 +91,16 @@ func runJoin() {
 
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+			go func() { exitCh <- true }()
 			return
 		}
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
+			if pixel.R(0, 650, 300, 800).Contains(win.MousePosition()) {
+				go func() { stateCh <- Menu }()
+				return
+			}
+
 			for idx, host := range *hosts {
 				if host.getRect(idx).Contains(win.MousePosition()) {
 					fmt.Printf("CLICKED HOST %v\n", host.DisplayName)

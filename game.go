@@ -374,6 +374,7 @@ func run() {
 
 	for !win.Closed() {
 		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+			go func() { exitCh <- true }()
 			return
 		}
 
