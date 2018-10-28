@@ -9,6 +9,19 @@ import (
 	"golang.org/x/image/font"
 )
 
+type OpCode int
+
+const (
+	_ OpCode = iota
+	SetActionSquare
+)
+
+type message struct {
+	Op           OpCode
+	ActionSquare actionSquare
+	BlockId      int
+}
+
 func loadTTF(path string, size float64) (font.Face, error) {
 	file, err := os.Open(path)
 	if err != nil {
