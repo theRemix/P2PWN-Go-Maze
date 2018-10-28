@@ -110,7 +110,9 @@ func runJoin() {
 
 			for idx, host := range *hosts {
 				if host.getRect(idx).Contains(win.MousePosition()) {
-					fmt.Printf("CLICKED HOST %v\n", host.DisplayName)
+					go func() { stateCh <- Game }()
+					go clientConnect(host.EntryURL)
+					return
 				}
 			}
 		}
@@ -118,4 +120,5 @@ func runJoin() {
 		win.Update()
 	}
 	win.Destroy()
+
 }

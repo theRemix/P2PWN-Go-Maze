@@ -15,6 +15,13 @@ import (
 
 const texSize = 64
 
+type actionSquare struct {
+	X      int
+	Y      int
+	block  int
+	active bool
+}
+
 var (
 	fullscreen   = false
 	showMap      = true
@@ -324,13 +331,6 @@ func getActionSquare() actionSquare {
 		active: active,
 		block:  block,
 	}
-}
-
-type actionSquare struct {
-	X      int
-	Y      int
-	block  int
-	active bool
 }
 
 func (as actionSquare) toggle(n int) {
