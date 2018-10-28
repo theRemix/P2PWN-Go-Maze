@@ -1,59 +1,66 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
-
-	"golang.org/x/net/websocket"
+	"time"
 )
 
-type message struct {
-	Op           string
-	ActionSquare *actionSquare
-	BlockId      int
+var clients = make(map[int]*Client)
+
+func clientConnected(w http.ResponseWriter, r *http.Request) {
+	cID := rand.Int()
+	newClient := &Client{
+		ID:      cID,
+		Updated: time.Now(),
+	}
+	clients[cID] = newClient
+
+	json.NewEncoder(w).Encode(newClient)
 }
 
-var clients = make(map[int]*websocket.Conn)
-
-func clientConnected(ws *websocket.Conn) {
-	cID := rand.Int()
-	clients[cID] = ws
-
-	for {
-		var m = &message{}
-
-		// receive a message using the codec
-		if err := websocket.JSON.Receive(ws, m); err != nil {
-			fmt.Printf("WSS Receive Error: %+v\n", err)
-			break
-		}
-
-		fmt.Printf("Received message:%+v\n", m)
-
-		// broadcast to players
-		for i, c := range clients {
-			if err := websocket.JSON.Send(c, m); err != nil {
-				fmt.Printf("WSS Send to Client[%d] Error: %+v\n", i, err)
-				break
-			}
-		}
-
-		// @TODO handle message on local game
+func clientUpdate(w http.ResponseWriter, r *http.Request) {
+	var client = &Client{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(client); err != nil {
+		fmt.Printf("Error reading ping body: %s", err)
+		return
 	}
 
-	delete(clients, cID)
+	clients[client.ID].Updated = time.Now()
+
+	json.NewEncoder(w).Encode(world)
+}
+
+func clientActed(w http.ResponseWriter, r *http.Request) {
+	var ca = &ClientAction{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(ca); err != nil {
+		fmt.Printf("Error reading client action: %s", err)
+		return
+	}
+
+	world[ca.ActionSquare.X][ca.ActionSquare.Y] = ca.BlockId
 }
 
 func runServer(lt net.Listener) {
+	client.ID = 0
 
-	http.Handle("/", websocket.Handler(clientConnected))
+	// @TODO http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/srv/connect", clientConnected)
+	http.HandleFunc("/srv/update", clientUpdate)
+	http.HandleFunc("/srv/action", clientActed)
 
 	server := http.Server{
 		Addr: ":" + Config.Port,
 	}
 
 	fmt.Printf("Server is listening on %v\n", server.Addr)
-	server.Serve(lt)
+	err := server.Serve(lt)
+	if err != nil {
+		fmt.Printf("Error Serve:%v\n", err)
+	}
 }

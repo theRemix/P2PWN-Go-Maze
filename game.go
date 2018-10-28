@@ -43,7 +43,7 @@ func setup() {
 	plane = pixel.V(0.0, 0.66)
 }
 
-var world = [24][24]int{
+var world = &[24][24]int{
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -276,7 +276,7 @@ func minimap() *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, 24, 26))
 
 	for x, row := range world {
-		for y, _ := range row {
+		for y := range row {
 			c := getColor(x, y)
 			if c.A == 255 {
 				c.A = 96
@@ -337,8 +337,18 @@ func (as actionSquare) toggle(n int) {
 	if as.active {
 		if world[as.X][as.Y] == 0 {
 			world[as.X][as.Y] = n
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      n,
+			})
 		} else {
 			world[as.X][as.Y] = 0
+			clientAction(&ClientAction{
+				Op:           SetActionSquare,
+				ActionSquare: as,
+				BlockId:      0,
+			})
 		}
 	}
 }
@@ -346,15 +356,21 @@ func (as actionSquare) toggle(n int) {
 func (as actionSquare) set(n int) {
 	if as.active {
 		world[as.X][as.Y] = n
+
+		clientAction(&ClientAction{
+			Op:           SetActionSquare,
+			ActionSquare: as,
+			BlockId:      n,
+		})
 	}
+
 }
 
 func runGame() {
 	setup()
 	cfg := pixelgl.WindowConfig{
-		Bounds:      pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
-		VSync:       true,
-		Undecorated: true,
+		Bounds: pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
+		VSync:  true,
 	}
 
 	if fullscreen {

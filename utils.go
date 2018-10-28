@@ -4,10 +4,30 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 )
+
+type OpCode int
+
+const (
+	_ OpCode = iota
+	SetActionSquare
+)
+
+type Client struct {
+	ID      int
+	Updated time.Time
+}
+
+type ClientAction struct {
+	ClientID     int
+	Op           OpCode
+	ActionSquare actionSquare
+	BlockId      int
+}
 
 func loadTTF(path string, size float64) (font.Face, error) {
 	file, err := os.Open(path)
