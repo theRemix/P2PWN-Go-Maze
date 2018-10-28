@@ -359,21 +359,8 @@ func (as actionSquare) set(n int) {
 	}
 }
 
-func runGame() {
+func runGame(win *pixelgl.Window) {
 	setup()
-	cfg := pixelgl.WindowConfig{
-		Bounds: pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
-		VSync:  true,
-	}
-
-	if fullscreen {
-		cfg.Monitor = pixelgl.PrimaryMonitor()
-	}
-
-	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
 
 	c := win.Bounds().Center()
 
@@ -381,8 +368,8 @@ func runGame() {
 
 	mapRot := -1.6683362599999894
 
-	for !win.Closed() {
-		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+	for state == Game {
+		if win.Closed() || win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			go func() { exitCh <- true }()
 			return
 		}
@@ -517,7 +504,6 @@ func runGame() {
 
 		win.Update()
 	}
-	win.Destroy()
 }
 
 func moveForward(s float64) {

@@ -51,19 +51,9 @@ func getHostList() (*p2pHostList, error) {
 	return hostList, err
 }
 
-func runJoin() {
+func runJoin(win *pixelgl.Window) {
 	const titleFont = font1 // zorque.ttf
 	const hostFont = font2  // gomarice_game_continue_02.ttf
-
-	cfg := pixelgl.WindowConfig{
-		Title:  "Join Game",
-		Bounds: pixel.R(0, 0, 1024, 768),
-	}
-	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-	win.SetSmooth(true)
 
 	titleFontFace, titleFontErr := loadTTF(titleFont, 80)
 	if titleFontErr != nil {
@@ -96,8 +86,8 @@ func runJoin() {
 
 	drawHostList(win, atlas, hosts)
 
-	for !win.Closed() {
-		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+	for state == Join {
+		if win.Closed() || win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			go func() { exitCh <- true }()
 			return
 		}
@@ -119,6 +109,4 @@ func runJoin() {
 
 		win.Update()
 	}
-	win.Destroy()
-
 }

@@ -2,13 +2,18 @@ package main
 
 import (
 	"flag"
+
+	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 )
 
 //go:generate go run includes/include.go
 
-var stateCh = make(chan State)
-var exitCh = make(chan bool)
+var (
+	stateCh = make(chan State)
+	exitCh  = make(chan bool)
+	state   = Menu
+)
 
 type State int
 
@@ -40,23 +45,53 @@ func main() {
 
 	flag.Parse()
 
-	for {
-		select {
-		case <-exitCh:
-			return
-		case state := <-stateCh: // not a great way to do this! #hackathon
+	cfg := pixelgl.WindowConfig{
+		Title: "Go Maze",
+		// Bounds: pixel.R(0, 0, 1024, 768),
+		Bounds: pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
+		VSync:  true,
+	}
+
+	pixelgl.Run(func() {
+		win, err := pixelgl.NewWindow(cfg)
+		if err != nil {
+			panic(err)
+		}
+		win.SetSmooth(true)
+
+		go func() {
+			for {
+				select {
+				case <-exitCh:
+					win.Destroy()
+					return
+				case state = <-stateCh: // not a great way to do this! #hackathon
+				}
+			}
+		}()
+
+		for !win.Closed() {
+
+			if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+				return
+			}
+
 			switch state {
 			case Menu:
-				pixelgl.Run(runMenu)
+				runMenu(win)
 			case Join:
-				pixelgl.Run(runJoin)
+				runJoin(win)
 			case Game:
-				pixelgl.Run(runGame)
+				runGame(win)
 			case Host:
-				pixelgl.Run(runHost)
+				runHost(win)
+			default:
+				runMenu(win)
 			}
-		default:
-			pixelgl.Run(runMenu)
 		}
-	}
+
+		win.Destroy()
+
+	})
+
 }

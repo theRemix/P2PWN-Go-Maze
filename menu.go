@@ -17,18 +17,8 @@ func drawMenuButtons(win *pixelgl.Window, titleTxt, hostTxt, joinTxt *text.Text)
 	joinTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(570, 300))))
 }
 
-func runMenu() {
+func runMenu(win *pixelgl.Window) {
 	const fontFace = font1 // zorque.ttf
-
-	cfg := pixelgl.WindowConfig{
-		Title:  "Pixel Rocks!",
-		Bounds: pixel.R(0, 0, 1024, 768),
-	}
-	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-	win.SetSmooth(true)
 
 	face, err := loadTTF(fontFace, 80)
 	if err != nil {
@@ -54,8 +44,8 @@ func runMenu() {
 	hostBounds := pixel.R(195, 285, 854, 336)
 	joinBounds := pixel.R(297, 183, 730, 237)
 
-	for !win.Closed() {
-		if win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
+	for state == Menu {
+		if win.Closed() || win.JustPressed(pixelgl.KeyEscape) || win.JustPressed(pixelgl.KeyQ) {
 			go func() { exitCh <- true }()
 			return
 		}
@@ -90,5 +80,4 @@ func runMenu() {
 
 		win.Update()
 	}
-	win.Destroy()
 }

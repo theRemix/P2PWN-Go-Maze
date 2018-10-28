@@ -32,18 +32,8 @@ type p2pwnConfig struct { // all values will be provided by P2PWN
 	HealthCheckURL string `json:"healthcheck_url"` // health endpoint
 }
 
-func runHost() {
+func runHost(win *pixelgl.Window) {
 	const font = font1 // fonts/zorque.ttf
-
-	cfg := pixelgl.WindowConfig{
-		Title:  "Host Game",
-		Bounds: pixel.R(0, 0, 1024, 768),
-	}
-	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-	win.SetSmooth(true)
 
 	fontFace, fontFaceErr := loadTTF(font, 80)
 	if fontFaceErr != nil {
@@ -110,7 +100,6 @@ func runHost() {
 	statusTxt.WriteString("Connected!")
 	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
 	win.Update()
-	win.Destroy()
 
 	go func() { stateCh <- Game }()
 	go runServer(lt)
