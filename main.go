@@ -5,6 +5,8 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
+//go:generate go run includes/include.go
+
 var stateCh = make(chan State)
 var exitCh = make(chan bool)
 

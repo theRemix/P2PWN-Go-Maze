@@ -5,10 +5,12 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
+GOGEN=$(GOCMD) generate
 
 all: build
 
 build:
+				$(GOGEN)
 				$(GOBUILD) -o $(BINARY) -v
 
 clean:
@@ -16,7 +18,7 @@ clean:
 				rm -f $(BINARY)
 
 run:
-				$(GOBUILD) -o $(BINARY) -v ./...
+				$(GOBUILD) -o $(BINARY) -v
 				env $(RUN_ENV) ./$(BINARY)
 
 deps:
