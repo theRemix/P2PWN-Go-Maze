@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -17,7 +19,6 @@ import (
 
 // CHANGE ME
 const appName = "p2pwn-go-maze"
-const displayName = "Go Maze"
 const appRelease = "DEVELOPMENT"
 
 // P2PWN Service Config
@@ -33,28 +34,61 @@ type p2pwnConfig struct { // all values will be provided by P2PWN
 }
 
 func runHost(win *pixelgl.Window) {
-	const font = font1 // fonts/zorque.ttf
+	const uiFont = font1    // zorque.ttf
+	const inputFont = font2 // gomarice_game_continue_02.ttf
 
-	fontFace, fontFaceErr := loadTTF(font, 80)
-	if fontFaceErr != nil {
-		panic(fontFaceErr)
+	uiFontFace, uiFontFaceErr := loadTTF(uiFont, 60)
+	if uiFontFaceErr != nil {
+		panic(uiFontFaceErr)
+	}
+
+	inputFontFace, inputFontFaceErr := loadTTF(inputFont, 50)
+	if inputFontFaceErr != nil {
+		panic(inputFontFaceErr)
 	}
 
 	win.Clear(colornames.Firebrick)
-	atlas := text.NewAtlas(fontFace, text.ASCII)
+	uiAtlas := text.NewAtlas(uiFontFace, text.ASCII)
+	inputAtlas := text.NewAtlas(inputFontFace, text.ASCII)
 
-	titleTxt := text.New(pixel.V(350, 100), atlas)
+	titleTxt := text.New(pixel.V(350, 100), uiAtlas)
 	titleTxt.Color = colornames.Lightgrey
 	titleTxt.WriteString("Host Game")
-	titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(600, -100))))
 
-	statusTxt := text.New(pixel.V(350, 100), atlas)
-	statusTxt.Color = colornames.Darkkhaki
-	statusTxt.WriteString("Creating Server")
-	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(730, 200))))
-	win.Update()
+	labelTxt := text.New(pixel.V(350, 100), uiAtlas)
+	labelTxt.Color = colornames.Lightgrey
+	labelTxt.WriteString("Enter Server Name:")
 
-	Config.DisplayName = displayName
+	serverNameTxt := text.New(pixel.V(350, 100), inputAtlas)
+	serverNameTxt.Color = colornames.Darkkhaki
+
+	fps := time.Tick(time.Second / 120)
+
+	serverName := []string{}
+
+	for !win.Closed() {
+		key := win.Typed()
+		if win.JustPressed(pixelgl.KeyEnter) || win.Repeated(pixelgl.KeyEnter) {
+			break
+		} else if win.JustPressed(pixelgl.KeyBackspace) || win.Repeated(pixelgl.KeyBackspace) {
+			serverName = serverName[:len(serverName)-1]
+		} else if key != "" {
+			serverName = append(serverName, key)
+		}
+
+		serverNameTxt.Clear()
+		serverNameTxt.WriteString(strings.Join(serverName[:], ""))
+
+		win.Clear(colornames.Midnightblue)
+		titleTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(titleTxt.Bounds().Center().Sub(pixel.V(0, 200)))))
+		labelTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(labelTxt.Bounds().Center().Sub(pixel.V(0, 100)))))
+		serverNameTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(serverNameTxt.Bounds().Center().Add(pixel.V(0, 70)))))
+		win.Update()
+
+		<-fps
+	}
+
+	Config.DisplayName = strings.Join(serverName[:], "")
 	Config.Release = appRelease
 
 	port, portErr := strconv.Atoi(Config.Port)
@@ -65,7 +99,7 @@ func runHost(win *pixelgl.Window) {
 	}
 
 	lt, ltErr := localtunnel.Listen(localtunnel.Options{
-		Subdomain: Config.AppName,
+		// 	Subdomain: Config.AppName,
 	})
 	if ltErr != nil {
 		fmt.Printf("Error creating localtunnel: %v\n", ltErr)
@@ -95,10 +129,10 @@ func runHost(win *pixelgl.Window) {
 
 	// fmt.Printf("DEBUG P2PWN : %+v\n", P2pwn)
 
-	statusTxt.Clear()
-	statusTxt.Color = colornames.Darkcyan
-	statusTxt.WriteString("Connected!")
-	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
+	labelTxt.Clear()
+	labelTxt.Color = colornames.Darkcyan
+	labelTxt.WriteString("Connected!")
+	labelTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(630, 300))))
 	win.Update()
 
 	go func() { stateCh <- Game }()
