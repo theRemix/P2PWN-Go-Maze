@@ -46,6 +46,10 @@ func clientActed(w http.ResponseWriter, r *http.Request) {
 	world[ca.ActionSquare.X][ca.ActionSquare.Y] = ca.BlockId
 }
 
+func health(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "ok")
+}
+
 func runServer(lt net.Listener) {
 	client.ID = 0
 
@@ -53,6 +57,7 @@ func runServer(lt net.Listener) {
 	http.HandleFunc("/srv/connect", clientConnected)
 	http.HandleFunc("/srv/update", clientUpdate)
 	http.HandleFunc("/srv/action", clientActed)
+	http.HandleFunc("/srv/health", health)
 
 	server := http.Server{
 		Addr: ":" + Config.Port,

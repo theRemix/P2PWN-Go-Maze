@@ -24,12 +24,12 @@ const appRelease = "DEVELOPMENT"
 var P2pwn = &p2pwnConfig{}
 
 type p2pwnConfig struct { // all values will be provided by P2PWN
-	ID          string `json:"id"`           // public id assigned by P2PWN service
-	AccessToken string `json:"access_token"` // private access token needed to perform actions on this host
-
-	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
-	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
-	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
+	ID             string `json:"id"`              // public id assigned by P2PWN service
+	AccessToken    string `json:"access_token"`    // private access token needed to perform actions on this host
+	AppName        string `json:"app_name"`        // for grouping rooms in P2PWN
+	DisplayName    string `json:"display_name"`    // used to display in P2PWN lobby
+	EntryURL       string `json:"entry_url"`       // url used as the entrypoint for your app, supplied by localtunnel
+	HealthCheckURL string `json:"healthcheck_url"` // health endpoint
 }
 
 func runHost() {
@@ -84,6 +84,7 @@ func runHost() {
 	}
 
 	Config.EntryURL = lt.URL()
+	Config.HealthCheckURL = lt.URL() + "/srv/health"
 	fmt.Printf("Connected to LT: %v\n", lt.URL())
 
 	payload, _ := json.Marshal(Config)

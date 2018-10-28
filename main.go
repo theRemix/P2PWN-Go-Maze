@@ -20,12 +20,13 @@ const (
 
 // App  Config
 type appConfig struct {
-	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
-	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
-	Release     string `json:"release"`      // "PRODUCTION", "DEVELOPMENT"
-	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
-	Port        string // Server Listening Port
-	P2pwn       string // P2PWN Service Address
+	AppName        string `json:"app_name"`        // for grouping rooms in P2PWN
+	DisplayName    string `json:"display_name"`    // used to display in P2PWN lobby
+	Release        string `json:"release"`         // "PRODUCTION", "DEVELOPMENT"
+	EntryURL       string `json:"entry_url"`       // url used as the entrypoint for your app, supplied by localtunnel
+	HealthCheckURL string `json:"healthcheck_url"` // health endpoint
+	Port           string // Server Listening Port
+	P2pwn          string // P2PWN Service Address
 }
 
 var Config = &appConfig{}
