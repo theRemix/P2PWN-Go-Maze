@@ -93,7 +93,7 @@ func runHost(win *pixelgl.Window) {
 		return
 	}
 
-	fmt.Printf("P2PWN is Ready: %+v\n", P2pwn)
+	// fmt.Printf("DEBUG P2PWN : %+v\n", P2pwn)
 
 	statusTxt.Clear()
 	statusTxt.Color = colornames.Darkcyan

@@ -67,7 +67,7 @@ func runServer(lt net.Listener) {
 		Addr: ":" + Config.Port,
 	}
 
-	fmt.Printf("Server is listening on %v\n", server.Addr)
+	fmt.Printf("Server is listening on %v\n", P2pwn.EntryURL)
 	err := server.Serve(lt)
 	if err != nil {
 		fmt.Printf("Error Serve:%v\n", err)
