@@ -69,14 +69,14 @@ func health(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ok")
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, home)
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, index)
 }
 
 func runServer(lt net.Listener) {
 	client.ID = 0
 
-	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/srv/connect", clientConnected)
 	http.HandleFunc("/srv/update", clientUpdate)
 	http.HandleFunc("/srv/action", clientActed)
