@@ -12,3 +12,4 @@
 *.out
 .env
 p2p-ready
+bin/go-maze-osx64
