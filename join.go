@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -37,9 +38,15 @@ func drawHostList(win *pixelgl.Window, atlas *text.Atlas, hosts *p2pHostList) {
 
 func getHostList() (*p2pHostList, error) {
 	hostList := &p2pHostList{}
-	const tempPayload = "[{\"id\":\"5c4cbf57-3cc9-44eb-b20d-8ba3b1e68bd8\",\"app_name\":\"p2pwn-go-maze\",\"display_name\":\"P2PWN Go Maze 1\",\"entry_url\":\"https://popular-liger-81.localtunnel.me\"},{\"id\":\"5c4cbf57-3cc9-44eb-b20d-8ba3b1e68bd1\",\"app_name\":\"p2pwn-go-maze\",\"display_name\":\"P2PWN Go Maze 2\",\"entry_url\":\"https://popular-liger-81.localtunnel.me\"},{\"id\":\"5c4cbf57-3cc9-44eb-b20d-8ba3b1e68bd2\",\"app_name\":\"p2pwn-go-maze\",\"display_name\":\"P2PWN Go Maze 3\",\"entry_url\":\"https://popular-liger-81.localtunnel.me\"},{\"id\":\"5c4cbf57-3cc9-44eb-b20d-8ba3b1e68bd3\",\"app_name\":\"p2pwn-go-maze\",\"display_name\":\"My Awesome Maze\",\"entry_url\":\"https://popular-liger-81.localtunnel.me\"}]"
+	hostRes, err := http.Get(Config.P2pwn + "/api/hosts")
+	if err != nil {
+		fmt.Printf("Error Connecting to P2PWN Service: %v\n", err)
+	}
 
-	err := json.Unmarshal([]byte(tempPayload), hostList)
+	defer hostRes.Body.Close()
+	if err := json.NewDecoder(hostRes.Body).Decode(hostList); err != nil {
+		fmt.Println("Unmarshal P2PWN Response Error:", err)
+	}
 
 	return hostList, err
 }

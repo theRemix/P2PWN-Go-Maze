@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 
@@ -29,4 +30,12 @@ func loadTTF(path string, size float64) (font.Face, error) {
 		Size:              size,
 		GlyphCacheEntries: 1,
 	}), nil
+}
+
+func setConfig(configPtr *string, flagName string, defaultVal string, help string) {
+	flag.StringVar(configPtr, flagName, defaultVal, help)
+
+	if val, ok := os.LookupEnv(flagName); ok {
+		*configPtr = val
+	}
 }

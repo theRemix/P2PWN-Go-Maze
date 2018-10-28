@@ -3,12 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 
 	"github.com/faiface/pixel"
@@ -23,18 +20,6 @@ const appName = "p2pwn-go-maze"
 const displayName = "Go Maze"
 const appRelease = "DEVELOPMENT"
 
-// App  Config
-var Config = &appConfig{}
-
-type appConfig struct {
-	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
-	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
-	Release     string `json:"release"`      // "PRODUCTION", "DEVELOPMENT"
-	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
-	Port        string // Server Listening Port
-	P2pwn       string // P2PWN Service Address
-}
-
 // P2PWN Service Config
 var P2pwn = &p2pwnConfig{}
 
@@ -45,24 +30,6 @@ type p2pwnConfig struct { // all values will be provided by P2PWN
 	AppName     string `json:"app_name"`     // for grouping rooms in P2PWN
 	DisplayName string `json:"display_name"` // used to display in P2PWN lobby
 	EntryURL    string `json:"entry_url"`    // url used as the entrypoint for your app, supplied by localtunnel
-}
-
-func setConfig(configPtr *string, flagName string, defaultVal string, help string) {
-	flag.StringVar(configPtr, flagName, defaultVal, help)
-
-	if val, ok := os.LookupEnv(flagName); ok {
-		*configPtr = val
-	}
-}
-
-func structToMap(i interface{}) (values url.Values) {
-	values = url.Values{}
-	iVal := reflect.ValueOf(i).Elem()
-	typ := iVal.Type()
-	for i := 0; i < iVal.NumField(); i++ {
-		values.Set(typ.Field(i).Name, fmt.Sprint(iVal.Field(i)))
-	}
-	return
 }
 
 func runHost() {
@@ -97,13 +64,8 @@ func runHost() {
 	statusTxt.Draw(win, pixel.IM.Moved(win.Bounds().Center().Sub(pixel.V(730, 200))))
 	win.Update()
 
-	setConfig(&Config.AppName, "name", appName, "Name of this app")
-	setConfig(&Config.Port, "port", "3000", "Port for server to listen on")
-	setConfig(&Config.P2pwn, "p2pwn", "https://p2pwithme.2018.nodeknockout.com", "P2PWN Service Address")
 	Config.DisplayName = displayName
 	Config.Release = appRelease
-
-	flag.Parse()
 
 	port, portErr := strconv.Atoi(Config.Port)
 	if portErr != nil {
