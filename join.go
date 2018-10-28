@@ -30,7 +30,7 @@ func drawHostList(win *pixelgl.Window, atlas *text.Atlas, hosts *p2pHostList) {
 		hostTxt := text.New(pixel.V(0, 0), atlas)
 		hostTxt.Color = colornames.Darkkhaki
 		hostTxt.WriteString(host.DisplayName)
-		r := host.getRect(idx)
+		r := host.getRect(len(*hosts) - 1 - idx)
 		hostTxt.Draw(win, pixel.IM.Moved(pixel.V(r.Min.X, r.Min.Y)))
 
 	}
@@ -96,10 +96,6 @@ func runJoin(win *pixelgl.Window) {
 		}
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
-			fmt.Printf("%+v", win.MousePosition())
-		}
-
-		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			if pixel.R(680, 470, 960, 600).Contains(win.MousePosition()) {
 				win.Update()
 				go func() { stateCh <- Menu }()
@@ -107,7 +103,7 @@ func runJoin(win *pixelgl.Window) {
 			}
 
 			for idx, host := range *hosts {
-				if host.getRect(idx).Contains(win.MousePosition()) {
+				if host.getRect(len(*hosts) - 1 - idx).Contains(win.MousePosition()) {
 					go func() { stateCh <- Game }()
 					go clientConnect(host.EntryURL)
 					return

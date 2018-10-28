@@ -17,10 +17,6 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-// CHANGE ME
-const appName = "p2pwn-go-maze"
-const appRelease = "DEVELOPMENT"
-
 // P2PWN Service Config
 var P2pwn = &p2pwnConfig{}
 
@@ -68,10 +64,18 @@ func runHost(win *pixelgl.Window) {
 
 	for !win.Closed() {
 		key := win.Typed()
-		if win.JustPressed(pixelgl.KeyEnter) || win.Repeated(pixelgl.KeyEnter) {
+		if win.Closed() {
+			go func() { exitCh <- true }()
+			return
+		} else if win.JustPressed(pixelgl.KeyEscape) {
+			go func() { stateCh <- Menu }()
+			return
+		} else if win.JustPressed(pixelgl.KeyEnter) || win.Repeated(pixelgl.KeyEnter) {
 			break
 		} else if win.JustPressed(pixelgl.KeyBackspace) || win.Repeated(pixelgl.KeyBackspace) {
-			serverName = serverName[:len(serverName)-1]
+			if len(serverName) > 0 {
+				serverName = serverName[:len(serverName)-1]
+			}
 		} else if key != "" {
 			serverName = append(serverName, key)
 		}

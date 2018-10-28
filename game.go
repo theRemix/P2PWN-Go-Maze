@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -22,6 +23,17 @@ type actionSquare struct {
 	active bool
 }
 
+type WorldState struct {
+	Tiles       *WorldTiles
+	LastUpdated time.Time
+}
+
+func (w *WorldState) UpdateWorldTime() {
+	w.LastUpdated = time.Now()
+}
+
+type WorldTiles [24][24]int
+
 var (
 	fullscreen   = false
 	showMap      = true
@@ -29,6 +41,36 @@ var (
 	height       = 200
 	scale        = 3.0
 	wallDistance = 8.0
+
+	worldState = &WorldState{
+		LastUpdated: time.Now(),
+		Tiles: &WorldTiles{
+			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
+			{1, 0, 0, 0, 2, 7, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 3, 0, 7, 0, 3, 0, 0, 0, 1},
+			{1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
+			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 0, 6, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 0, 0, 1},
+			{1, 0, 6, 0, 4, 0, 7, 0, 4, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 1},
+			{1, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 1},
+			{1, 4, 4, 4, 4, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 5, 5, 5, 0, 5, 5, 0, 0, 1},
+			{1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 1},
+			{1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 5, 0, 5, 5, 5, 5, 5, 5, 5, 0, 5, 0, 1},
+			{1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5, 0, 5, 0, 1},
+			{1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 1},
+			{1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		},
+	}
 
 	as actionSquare
 
@@ -41,33 +83,6 @@ func setup() {
 	pos = pixel.V(12.0, 14.5)
 	dir = pixel.V(-1.0, 0.0)
 	plane = pixel.V(0.0, 0.66)
-}
-
-var world = &[24][24]int{
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 7, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 3, 0, 7, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 0, 0, 1},
-	{1, 0, 6, 0, 4, 0, 7, 0, 4, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 1},
-	{1, 4, 4, 4, 4, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 5, 5, 5, 0, 5, 5, 0, 0, 1},
-	{1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 1},
-	{1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 5, 0, 5, 5, 5, 5, 5, 5, 5, 0, 5, 0, 1},
-	{1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5, 0, 5, 0, 1},
-	{1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 1},
-	{1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 }
 
 func loadTextures() *image.RGBA {
@@ -84,11 +99,11 @@ func loadTextures() *image.RGBA {
 }
 
 func getTexNum(x, y int) int {
-	return world[x][y]
+	return worldState.Tiles[x][y]
 }
 
 func getColor(x, y int) color.RGBA {
-	switch world[x][y] {
+	switch worldState.Tiles[x][y] {
 	case 0:
 		return color.RGBA{43, 30, 24, 255}
 	case 1:
@@ -164,7 +179,7 @@ func frame() *image.RGBA {
 				side = true
 			}
 
-			if world[worldX][worldY] > 0 {
+			if worldState.Tiles[worldX][worldY] > 0 {
 				hit = true
 			}
 		}
@@ -275,7 +290,7 @@ func frame() *image.RGBA {
 func minimap() *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, 24, 26))
 
-	for x, row := range world {
+	for x, row := range worldState.Tiles {
 		for y := range row {
 			c := getColor(x, y)
 			if c.A == 255 {
@@ -322,7 +337,7 @@ func getActionSquare() actionSquare {
 	active := pt.X > 0 && pt.X < 23 && pt.Y > 0 && pt.Y < 23
 
 	if active {
-		block = world[pt.X][pt.Y]
+		block = worldState.Tiles[pt.X][pt.Y]
 	}
 
 	return actionSquare{
@@ -335,27 +350,29 @@ func getActionSquare() actionSquare {
 
 func (as actionSquare) toggle(n int) {
 	if as.active {
-		if world[as.X][as.Y] == 0 {
-			world[as.X][as.Y] = n
-			clientAction(&ClientAction{
+		if worldState.Tiles[as.X][as.Y] == 0 {
+			worldState.Tiles[as.X][as.Y] = n
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      n,
 			})
 		} else {
-			world[as.X][as.Y] = 0
-			clientAction(&ClientAction{
+			worldState.Tiles[as.X][as.Y] = 0
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      0,
 			})
 		}
 	}
+	worldState.UpdateWorldTime()
 }
 
 func (as actionSquare) set(n int) {
 	if as.active {
-		world[as.X][as.Y] = n
+		worldState.Tiles[as.X][as.Y] = n
+		worldState.UpdateWorldTime()
 	}
 }
 
@@ -411,7 +428,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key1) {
 			as.set(1)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      1,
@@ -420,7 +437,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key2) {
 			as.set(2)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      2,
@@ -429,7 +446,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key3) {
 			as.set(3)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      3,
@@ -438,7 +455,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key4) {
 			as.set(4)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      4,
@@ -447,7 +464,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key5) {
 			as.set(5)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      5,
@@ -456,7 +473,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key6) {
 			as.set(6)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      6,
@@ -465,7 +482,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key7) {
 			as.set(7)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      7,
@@ -474,7 +491,7 @@ func runGame(win *pixelgl.Window) {
 
 		if win.JustPressed(pixelgl.Key0) {
 			as.set(0)
-			clientAction(&ClientAction{
+			client.SendAction(&ClientAction{
 				Op:           SetActionSquare,
 				ActionSquare: as,
 				BlockId:      0,
@@ -508,42 +525,42 @@ func runGame(win *pixelgl.Window) {
 
 func moveForward(s float64) {
 	if wallDistance > 0.3 {
-		if world[int(pos.X+dir.X*s)][int(pos.Y)] == 0 {
+		if worldState.Tiles[int(pos.X+dir.X*s)][int(pos.Y)] == 0 {
 			pos.X += dir.X * s
 		}
 
-		if world[int(pos.X)][int(pos.Y+dir.Y*s)] == 0 {
+		if worldState.Tiles[int(pos.X)][int(pos.Y+dir.Y*s)] == 0 {
 			pos.Y += dir.Y * s
 		}
 	}
 }
 
 func moveLeft(s float64) {
-	if world[int(pos.X-plane.X*s)][int(pos.Y)] == 0 {
+	if worldState.Tiles[int(pos.X-plane.X*s)][int(pos.Y)] == 0 {
 		pos.X -= plane.X * s
 	}
 
-	if world[int(pos.X)][int(pos.Y-plane.Y*s)] == 0 {
+	if worldState.Tiles[int(pos.X)][int(pos.Y-plane.Y*s)] == 0 {
 		pos.Y -= plane.Y * s
 	}
 }
 
 func moveBackwards(s float64) {
-	if world[int(pos.X-dir.X*s)][int(pos.Y)] == 0 {
+	if worldState.Tiles[int(pos.X-dir.X*s)][int(pos.Y)] == 0 {
 		pos.X -= dir.X * s
 	}
 
-	if world[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
+	if worldState.Tiles[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
 		pos.Y -= dir.Y * s
 	}
 }
 
 func moveRight(s float64) {
-	if world[int(pos.X+plane.X*s)][int(pos.Y)] == 0 {
+	if worldState.Tiles[int(pos.X+plane.X*s)][int(pos.Y)] == 0 {
 		pos.X += plane.X * s
 	}
 
-	if world[int(pos.X)][int(pos.Y+plane.Y*s)] == 0 {
+	if worldState.Tiles[int(pos.X)][int(pos.Y+plane.Y*s)] == 0 {
 		pos.Y += plane.Y * s
 	}
 }

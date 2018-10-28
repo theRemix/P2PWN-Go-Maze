@@ -6,7 +6,15 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"time"
+)
+
+type OpCode int
+
+const (
+	_ OpCode = iota
+	SetActionSquare
+	StateOld
+	StateNew
 )
 
 var clients = make(map[int]*Client)
@@ -15,7 +23,7 @@ func clientConnected(w http.ResponseWriter, r *http.Request) {
 	cID := rand.Int()
 	newClient := &Client{
 		ID:      cID,
-		Updated: time.Now(),
+		Updated: worldState.LastUpdated,
 	}
 	clients[cID] = newClient
 
@@ -23,16 +31,26 @@ func clientConnected(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientUpdate(w http.ResponseWriter, r *http.Request) {
-	var client = &Client{}
+	var clientToUpdate = &Client{}
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(client); err != nil {
-		fmt.Printf("Error reading ping body: %s", err)
+	if err := decoder.Decode(clientToUpdate); err != nil {
+		fmt.Printf("Error reading client update: %s\n", err)
 		return
 	}
 
-	clients[client.ID].Updated = time.Now()
+	updateResponse := &UpdateResponse{
+		State: StateOld,
+	}
 
-	json.NewEncoder(w).Encode(world)
+	if clientToUpdate.NeedsUpdate() {
+		updateResponse = &UpdateResponse{
+			State:      StateNew,
+			Updated:    worldState.LastUpdated,
+			WorldTiles: worldState.Tiles,
+		}
+	}
+
+	json.NewEncoder(w).Encode(updateResponse)
 }
 
 func clientActed(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +61,8 @@ func clientActed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	world[ca.ActionSquare.X][ca.ActionSquare.Y] = ca.BlockId
+	ca.ActionSquare.active = true
+	ca.ActionSquare.set(ca.BlockId)
 }
 
 func health(w http.ResponseWriter, r *http.Request) {

@@ -9,6 +9,49 @@ import (
 	"time"
 )
 
+type ClientAction struct {
+	ClientID     int
+	Op           OpCode
+	ActionSquare actionSquare
+	BlockId      int
+}
+
+type Client struct {
+	ID      int
+	Updated time.Time
+}
+
+func (c *Client) NeedsUpdate() bool {
+	return !c.Updated.Equal(worldState.LastUpdated)
+}
+
+func (c *Client) SendAction(ca *ClientAction) {
+	if c.ID == 0 { // client is host
+		return
+	}
+	ca.ClientID = c.ID
+	fmt.Printf("Client Action: %+v\n", ca)
+	go func() {
+		jsonCa, _ := json.Marshal(ca)
+
+		resp, reqErr := http.Post(clientCreateUrl("/srv/action"), "application/json", bytes.NewBuffer(jsonCa))
+		if reqErr != nil {
+			fmt.Printf("Error in http request, client action: %s\n", reqErr)
+			return
+		}
+		if resp.StatusCode != 200 {
+			go func() { stateCh <- Menu }()
+			return
+		}
+	}()
+}
+
+type UpdateResponse struct {
+	State      OpCode
+	Updated    time.Time
+	WorldTiles *WorldTiles
+}
+
 var (
 	client  = &Client{}
 	hostURL string
@@ -33,12 +76,19 @@ func clientConnect(rawurl string) {
 		fmt.Printf("Error in http request, client connect: %s\n", reqErr)
 		return
 	}
+	if resp.StatusCode != 200 {
+		go func() { stateCh <- Menu }()
+		return
+	}
+
 	defer resp.Body.Close()
 
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(client); err != nil {
-		fmt.Printf("Error decoding response: %s", err)
+		fmt.Printf("Error decoding response: %s\n", err)
 	}
+
+	fmt.Printf("Client Connected to Host: %s\n", hostURL)
 
 	clientUpdates()
 }
@@ -55,26 +105,24 @@ func clientUpdates() {
 				fmt.Printf("Error in http request, client update: %s\n", reqErr)
 				return
 			}
+			if resp.StatusCode != 200 {
+				go func() { stateCh <- Menu }()
+				return
+			}
 			defer resp.Body.Close()
 
+			updateResponse := &UpdateResponse{}
+
 			decoder := json.NewDecoder(resp.Body)
-			if err := decoder.Decode(world); err != nil {
-				fmt.Printf("Error decoding response: %s", err)
+			if err := decoder.Decode(updateResponse); err != nil {
+				fmt.Printf("Error decoding response: %s\n", err)
+			}
+
+			if updateResponse.State == StateNew {
+				client.Updated = updateResponse.Updated
+				worldState.Tiles = updateResponse.WorldTiles
 			}
 		}
 
-	}()
-}
-
-func clientAction(ca *ClientAction) {
-	go func() {
-		ca.ClientID = client.ID
-		jsonCa, _ := json.Marshal(ca)
-
-		_, reqErr := http.Post(clientCreateUrl("/srv/action"), "application/json", bytes.NewBuffer(jsonCa))
-		if reqErr != nil {
-			fmt.Printf("Error in http request, client action: %s\n", reqErr)
-			return
-		}
 	}()
 }

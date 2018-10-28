@@ -9,6 +9,12 @@ import (
 
 //go:generate go run includes/include.go
 
+// CHANGE ME
+const (
+	appName    = "p2pwn-go-maze"
+	appRelease = "DEVELOPMENT"
+)
+
 var (
 	stateCh = make(chan State)
 	exitCh  = make(chan bool)
@@ -41,7 +47,7 @@ var Config = &appConfig{}
 func main() {
 	setConfig(&Config.AppName, "name", appName, "Name of this app")
 	setConfig(&Config.Port, "port", "3000", "Port for server to listen on")
-	setConfig(&Config.P2pwn, "p2pwn", "https://p2pwithme.2018.nodeknockout.com", "P2PWN Service Address")
+	setConfig(&Config.P2pwn, "p2pwn", "https://p2pwn-production.herokuapp.com", "P2PWN Service Address")
 
 	flag.Parse()
 
