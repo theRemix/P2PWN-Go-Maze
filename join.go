@@ -38,7 +38,7 @@ func drawHostList(win *pixelgl.Window, atlas *text.Atlas, hosts *p2pHostList) {
 
 func getHostList() (*p2pHostList, error) {
 	hostList := &p2pHostList{}
-	hostRes, err := http.Get(Config.P2pwn + "/api/hosts")
+	hostRes, err := http.Get(Config.P2pwn + "/api/hosts?app_name=" + Config.AppName)
 	if err != nil {
 		fmt.Printf("Error Connecting to P2PWN Service: %v\n", err)
 	}
